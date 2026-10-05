@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Escher-Parkett</title>
+    <meta name="description" content="Gestalte eine Fliese im Stil von M. C. Escher, die lückenlos die Fläche füllt." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M0 0h7c0 2 2 2 2 0h7v7c-2 0-2 2 0 2v7H9c0-2-2-2-2 0H0V9c2 0 2-2 0-2z' fill='%23f2a541'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">Escher-Parkett</div>
+        <nav id="steps" aria-label="Schritte"></nav>
+        <div class="history">
+          <button id="undo" title="Rückgängig (Strg+Z)" aria-label="Rückgängig">↶</button>
+          <button id="redo" title="Wiederholen (Strg+Y)" aria-label="Wiederholen">↷</button>
+        </div>
+      </header>
+      <main class="layout">
+        <section class="stage">
+          <svg id="canvas" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg>
+          <div id="toast" role="status" aria-live="polite"></div>
+        </section>
+        <aside id="panel"></aside>
+      </main>
+    </div>
+    <div id="print-root"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
