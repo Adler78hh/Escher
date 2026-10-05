@@ -62,7 +62,21 @@ button.primary {
 .app {
   display: flex;
   flex-direction: column;
+  height: 100vh;
   height: 100dvh;
+}
+
+#boot-error {
+  max-width: 640px;
+  margin: 48px auto;
+  padding: 0 16px;
+  line-height: 1.5;
+}
+
+#boot-error .detail {
+  color: var(--muted);
+  font-size: 0.85rem;
+  word-break: break-word;
 }
 
 .topbar {
@@ -428,6 +442,7 @@ label.number input {
   }
   #panel {
     width: auto;
+    max-height: 46vh;
     max-height: 46dvh;
     border-left: none;
     border-top: 1px solid var(--line);

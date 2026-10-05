@@ -15,6 +15,33 @@
   </head>
   <body>
     <div id="root"></div>
+    <div id="boot-error" hidden></div>
+    <script>
+      // If the app cannot start (e.g. a browser that is too old), show why instead of a white page.
+      (function () {
+        function show(msg) {
+          var el = document.getElementById('boot-error');
+          if (!el || document.querySelector('#root .app')) return;
+          el.hidden = false;
+          el.innerHTML =
+            '<h1>Die App konnte nicht starten.</h1>' +
+            '<p>Bitte aktualisiere den Browser bzw. das iPad (Einstellungen → Allgemein → Softwareupdate) oder probiere einen anderen Browser.</p>' +
+            '<p class="detail"></p>';
+          el.querySelector('.detail').textContent = 'Technischer Hinweis: ' + msg + ' · ' + navigator.userAgent;
+        }
+        window.addEventListener('error', function (e) {
+          show(e.message || 'Skriptfehler');
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          show(String(e.reason));
+        });
+        window.addEventListener('load', function () {
+          setTimeout(function () {
+            if (!document.querySelector('#root .app')) show('Die Oberfläche wurde nicht geladen.');
+          }, 4000);
+        });
+      })();
+    </script>
     <div id="print-root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
