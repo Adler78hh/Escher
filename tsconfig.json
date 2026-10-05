@@ -8,6 +8,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "skipLibCheck": true,
+    "jsx": "react-jsx",
     "types": ["vite/client"]
   },
   "include": ["src", "tests"]

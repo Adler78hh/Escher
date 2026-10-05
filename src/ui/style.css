@@ -33,7 +33,8 @@ button {
   background: var(--surface);
   border-radius: 10px;
   padding: 10px 14px;
-  min-height: 44px;
+  min-height: 48px;
+  min-width: 48px;
   touch-action: manipulation;
 }
 
@@ -52,6 +53,10 @@ button.primary {
   border-color: var(--accent);
   color: var(--accent-ink);
   font-weight: 600;
+}
+
+#root {
+  height: 100%;
 }
 
 .app {
@@ -99,6 +104,10 @@ button.primary {
   border-radius: 50%;
   background: var(--line);
   font-weight: 700;
+}
+
+.step.done .num {
+  background: #f3d3a8;
 }
 
 .step.active .num {
@@ -153,6 +162,7 @@ button.primary {
 
 .panel-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 16px;
   display: flex;
@@ -200,6 +210,55 @@ button.primary {
 
 .card-title {
   font-weight: 700;
+}
+
+.card.parquet {
+  align-items: center;
+  text-align: center;
+  padding: 8px;
+}
+
+.card.parquet:disabled {
+  opacity: 0.55;
+}
+
+.thumb {
+  width: 100%;
+  max-width: 120px;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.card-note {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legend-swatch {
+  width: 32px;
+  height: 6px;
+  border-radius: 3px;
+  flex: none;
+}
+
+.seg.tabs button {
+  font-weight: 600;
 }
 
 .card-label {
@@ -250,12 +309,13 @@ label.number {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 40px;
+  min-height: 48px;
 }
 
 label.check input {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
+  flex: none;
   accent-color: var(--accent);
 }
 
@@ -293,13 +353,13 @@ label.number input {
 
 .swatches {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
   gap: 6px;
 }
 
 .swatch {
   aspect-ratio: 1;
-  min-height: 40px;
+  min-height: 48px;
   padding: 0;
   border-radius: 50%;
   border: 2px solid rgba(0, 0, 0, 0.15);
@@ -360,6 +420,9 @@ label.number input {
 
 /* Narrow screens and portrait tablets: canvas on top, panel below. */
 @media (max-width: 820px) {
+  .cards.parquets {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  }
   .layout {
     flex-direction: column;
   }

@@ -1,18 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { type Region, intersection, regionArea, transformRegion, union } from '../src/geom';
-import { type Lattice, type SymmetryMode, copiesInRange, edgeNeighbours } from '../src/symmetry';
-import { type EditTool, applyEdit, baseTile, snapToBoundary, stampRegion } from '../src/tile';
+import { type Pt, type Region, apply, intersection, invert, pointInRegion, regionArea, transformRegion, union } from '../src/core/geom';
+import { type EditTool, applyEdit, snapToBoundary, stampRegion } from '../src/core/tile';
+import { symmetryOf } from '../src/parquets';
+import { copiesInRange, square } from '../src/parquets/square';
+import type { Lattice, SymmetryId } from '../src/parquets/types';
 
-const SQUARE: Lattice = { u: { x: 1000, y: 0 }, v: { x: 0, y: 1000 } };
-const RECT: Lattice = { u: { x: 1200, y: 0 }, v: { x: 0, y: 800 } };
-const PARALLELOGRAM: Lattice = { u: { x: 1000, y: 0 }, v: { x: 300, y: 900 } };
+type SymmetryMode = SymmetryId;
+const sym = (mode: SymmetryMode) => symmetryOf(square, mode);
+const baseTile = (lat: Lattice) => square.baseTile(lat);
+const ctx = (lat: Lattice, mode: SymmetryMode) => ({ impl: square, sym: sym(mode), lat });
+
+const SQUARE: Lattice = { a: { x: 1000, y: 0 }, b: { x: 0, y: 1000 } };
+const RECT: Lattice = { a: { x: 1200, y: 0 }, b: { x: 0, y: 800 } };
+const PARALLELOGRAM: Lattice = { a: { x: 1000, y: 0 }, b: { x: 300, y: 900 } };
 
 /**
  * The copies in a large block must not overlap, and together they must cover
  * the central cell completely.
  */
 function expectTiles(tile: Region, lat: Lattice, mode: SymmetryMode) {
-  const copies = copiesInRange(lat, mode, -3, 3, -3, 3);
+  const copies = copiesInRange(lat, sym(mode), -3, 3, -3, 3);
   expect(copies.length).toBe(49);
   const regions = copies.map((c) => transformRegion(tile, c.m));
   let all: Region = [];
@@ -35,9 +42,23 @@ function expectTiles(tile: Region, lat: Lattice, mode: SymmetryMode) {
         ],
       ],
     ],
-    [3 * lat.u.x, 3 * lat.u.y, 3 * lat.v.x, 3 * lat.v.y, -lat.u.x - lat.v.x, -lat.u.y - lat.v.y],
+    [3 * lat.a.x, 3 * lat.a.y, 3 * lat.b.x, 3 * lat.b.y, -lat.a.x - lat.b.x, -lat.a.y - lat.b.y],
   );
   expect(Math.abs(regionArea(intersection(all, block)) - regionArea(block)) / regionArea(block)).toBeLessThan(1e-4);
+  expectSamplesInOneTile(tile, lat, mode);
+}
+
+/** Sample points in the central 3x3 cells: each lies in exactly one copy. */
+function expectSamplesInOneTile(tile: Region, lat: Lattice, mode: SymmetryMode) {
+  const copies = copiesInRange(lat, sym(mode), -3, 3, -3, 3).map((c) => invert(c.m));
+  for (let k = 0; k < 400; k++) {
+    // Deterministic, irrational-ish offsets avoid hitting edges exactly.
+    const s = -1 + 3 * ((k * 0.6180339887 + 0.137) % 1);
+    const t = -1 + 3 * ((k * 0.7548776662 + 0.31) % 1);
+    const p: Pt = { x: s * lat.a.x + t * lat.b.x, y: s * lat.a.y + t * lat.b.y };
+    const hits = copies.filter((inv) => pointInRegion(apply(inv, p), tile)).length;
+    expect(hits, `point ${k}`).toBe(1);
+  }
 }
 
 function circle(cx: number, cy: number, r: number): Region {
@@ -54,9 +75,8 @@ function circle(cx: number, cy: number, r: number): Region {
 describe('symmetry groups', () => {
   for (const mode of ['T', 'C2', 'C4'] as SymmetryMode[]) {
     it(`edge neighbours of ${mode} touch the base cell`, () => {
-      const g = edgeNeighbours(SQUARE, mode);
       const base = baseTile(SQUARE);
-      for (const m of Object.values(g)) {
+      for (const m of sym(mode).neighbourMaps(SQUARE)) {
         const n = transformRegion(base, m);
         expect(regionArea(intersection(n, base))).toBe(0);
         expect(regionArea(union(n, base))).toBe(2_000_000);
@@ -74,18 +94,18 @@ describe('editing keeps the tile tileable', () => {
     ['C4', SQUARE],
   ];
   for (const [mode, lat] of cases) {
-    it(`${mode} on ${lat.u.x}x${lat.v.y}/${lat.v.x}`, () => {
+    it(`${mode} on ${lat.a.x}x${lat.b.y}/${lat.b.x}`, () => {
       let tile = baseTile(lat);
       const edits: [EditTool, Region][] = [
-        ['add', circle(lat.u.x / 2 - 220, 0, 150)],
-        ['nibble', circle(lat.u.x + lat.v.x / 2 - 20, lat.v.y / 2 + 80, 160)],
-        ['add', circle(lat.v.x + 200, lat.v.y + 10, 120)],
-        ['nibble', circle(lat.v.x / 4, lat.v.y / 4 + 300, 140)],
+        ['add', circle(lat.a.x / 2 - 220, 0, 150)],
+        ['nibble', circle(lat.a.x + lat.b.x / 2 - 20, lat.b.y / 2 + 80, 160)],
+        ['add', circle(lat.b.x + 200, lat.b.y + 10, 120)],
+        ['nibble', circle(lat.b.x / 4, lat.b.y / 4 + 300, 140)],
         ...(mode === 'T' ? [['add', circle(0, 0, 130)] as [EditTool, Region]] : []),
       ];
       for (const [i, [tool, shape]] of edits.entries()) {
-        const res = applyEdit(tile, shape, tool, lat, mode);
-        expect(res.ok, (res.ok ? "" : res.reason) + " edit " + i).toBe(true);
+        const res = applyEdit(tile, shape, tool, ctx(lat, mode));
+        expect(res.ok, (res.ok ? '' : res.reason) + ' edit ' + i).toBe(true);
         if (res.ok) tile = res.tile;
       }
       expect(Math.abs(regionArea(tile) / regionArea(baseTile(lat)) - 1)).toBeLessThan(1e-3);
@@ -104,7 +124,7 @@ describe('editing keeps the tile tileable', () => {
         const pl = snapToBoundary(p, tile, 200, 100)!;
         expect(pl).not.toBeNull();
         for (const kind of ['circle', 'triangle', 'rect'] as const) {
-          const res = applyEdit(tile, stampRegion(kind, pl, 120, tool), tool, SQUARE, mode);
+          const res = applyEdit(tile, stampRegion(kind, pl, 120, tool), tool, ctx(SQUARE, mode));
           if (res.ok) tile = res.tile;
         }
       }
@@ -113,13 +133,13 @@ describe('editing keeps the tile tileable', () => {
   });
 
   it('rejects shapes that reach too far', () => {
-    const res = applyEdit(baseTile(SQUARE), circle(500, 0, 700), 'add', SQUARE, 'T');
+    const res = applyEdit(baseTile(SQUARE), circle(500, 0, 700), 'add', ctx(SQUARE, 'T'));
     expect(res.ok).toBe(false);
   });
 
   it('rejects shapes on a centre of rotation', () => {
-    expect(applyEdit(baseTile(SQUARE), circle(500, 0, 150), 'add', SQUARE, 'C2').ok).toBe(false);
-    expect(applyEdit(baseTile(SQUARE), circle(1000, 0, 150), 'add', SQUARE, 'C4').ok).toBe(false);
+    expect(applyEdit(baseTile(SQUARE), circle(500, 0, 150), 'add', ctx(SQUARE, 'C2')).ok).toBe(false);
+    expect(applyEdit(baseTile(SQUARE), circle(1000, 0, 150), 'add', ctx(SQUARE, 'C4')).ok).toBe(false);
   });
 });
 
@@ -147,7 +167,7 @@ describe('random edits', () => {
         if (!pl) continue;
         const kinds = ['circle', 'triangle', 'rect'] as const;
         const tool: EditTool = rand() < 0.5 ? 'add' : 'nibble';
-        const res = applyEdit(tile, stampRegion(kinds[i % 3], pl, 60 + rand() * 160, tool), tool, lat, mode);
+        const res = applyEdit(tile, stampRegion(kinds[i % 3], pl, 60 + rand() * 160, tool), tool, ctx(lat, mode));
         if (res.ok) {
           tile = res.tile;
           accepted++;

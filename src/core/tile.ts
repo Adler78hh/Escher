@@ -15,6 +15,7 @@ import {
   difference,
   intersection,
   invert,
+  isIdentity,
   len,
   nearestOnBoundary,
   pointInRegion,
@@ -24,33 +25,29 @@ import {
   transformRegion,
   union,
 } from './geom';
-import { type Lattice, type SymmetryMode, neighbourCopies } from './symmetry';
+import type { Lattice, ParquetImpl, SymmetryDef } from '../parquets/types';
 
 export type EditTool = 'add' | 'nibble';
 
 export type EditResult = { ok: true; tile: Region } | { ok: false; reason: string };
 
-export function baseTile(lat: Lattice): Region {
-  const { u, v } = lat;
-  return [
-    [
-      [
-        { x: 0, y: 0 },
-        { x: u.x, y: u.y },
-        { x: u.x + v.x, y: u.y + v.y },
-        { x: v.x, y: v.y },
-      ],
-    ],
-  ];
+/** What an edit needs to know about the parquet. */
+export interface EditContext {
+  impl: ParquetImpl;
+  sym: SymmetryDef;
+  lat: Lattice;
 }
 
-export function applyEdit(tile: Region, shape: Region, tool: EditTool, lat: Lattice, mode: SymmetryMode): EditResult {
+export function applyEdit(tile: Region, shape: Region, tool: EditTool, { impl, sym, lat }: EditContext): EditResult {
   const area0 = regionArea(tile);
   const tol = Math.max(50, area0 * 1e-4);
   const r = cleanRegion(shape);
   if (regionArea(r) < tol) return { ok: false, reason: 'Die Form ist zu klein.' };
 
-  const neighbours = neighbourCopies(lat, mode, 2).map((c) => ({ ...c, region: transformRegion(tile, c.m) }));
+  const neighbours = impl
+    .copiesAround(lat, sym, 2)
+    .filter((c) => !isIdentity(c.m))
+    .map((c) => ({ ...c, region: transformRegion(tile, c.m) }));
   let next: Region;
 
   if (tool === 'add') {
@@ -90,7 +87,7 @@ export function applyEdit(tile: Region, shape: Region, tool: EditTool, lat: Latt
   }
 
   const centreHint =
-    mode === 'T' ? '' : ' Tipp: Setze die Form nicht genau auf einen Drehpunkt (Kantenmitte oder Ecke), sondern daneben.';
+    sym.id === 'T' ? '' : ' Tipp: Setze die Form nicht genau auf einen Drehpunkt (Kantenmitte oder Ecke), sondern daneben.';
   if (Math.abs(regionArea(next) - area0) > tol) {
     return { ok: false, reason: 'Die Form überschneidet sich mit ihrem eigenen Gegenstück.' + centreHint };
   }

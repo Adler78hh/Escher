@@ -1,8 +1,8 @@
 // SVG markup for tiles and parquets, shared by the screen and the print output.
 
-import { type Affine, affineToSvg, len, regionToPath } from './geom';
-import type { Doc, Stroke } from './state';
-import { type Copy, orientationOf } from './symmetry';
+import { type Affine, affineToSvg, len, regionToPath } from '../core/geom';
+import type { Doc, Stroke } from '../model/doc';
+import type { Copy } from '../parquets/types';
 
 let uid = 0;
 
@@ -17,19 +17,17 @@ export function strokePath(s: Stroke): string {
 }
 
 /** Typical outline width in world units. */
-export const lineWidth = (doc: Doc): number => Math.max(len(doc.lattice.u), len(doc.lattice.v)) * 0.006;
+export const lineWidth = (doc: Doc): number => Math.max(len(doc.lattice.a), len(doc.lattice.b)) * 0.006;
 
 export function copyColor(doc: Doc, c: Copy): string {
   switch (doc.coloring) {
     case 'single':
       return doc.colors[0];
     case 'checker':
-      return (c.cell[0] + c.cell[1]) % 2 === 0 ? doc.colors[0] : doc.colors[1];
-    case 'rotation': {
+      return doc.colors[c.checker];
+    case 'rotation':
       // C4: one colour per quarter turn; C2: upright vs. upside down.
-      const o = orientationOf(c.m);
-      return doc.colors[doc.mode === 'C4' ? o : o === 0 ? 0 : 1];
-    }
+      return doc.colors[doc.symmetry === 'C4' ? c.turn : c.turn === 0 ? 0 : 1];
   }
 }
 

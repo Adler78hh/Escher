@@ -1,10 +1,9 @@
 // Document state, undo/redo and local autosave.
 
-import type { Affine, Pt, Region } from './geom';
-import { type Lattice, type SymmetryMode } from './symmetry';
-import { baseTile } from './tile';
+import type { Affine, Pt, Region } from '../core/geom';
+import { implOf } from '../parquets';
+import type { Lattice, SymmetryId } from '../parquets/types';
 
-export type GridForm = 'square' | 'rect' | 'parallelogram';
 export type Coloring = 'single' | 'checker' | 'rotation';
 
 export interface Stroke {
@@ -14,64 +13,67 @@ export interface Stroke {
 }
 
 export interface Doc {
-  parquet: string;
-  mode: SymmetryMode;
-  form: GridForm;
+  /** Parquet number (1–11). */
+  parquet: number;
+  symmetry: SymmetryId;
   lattice: Lattice;
   tile: Region;
   strokes: Stroke[];
-  /** Fill colours: [0] the piece, [1] second colour for the checkerboard, [2], [3] for four orientations. */
+  /** Fill colours: [0] the piece, [1] second colour for "Abwechselnd", [2], [3] for four turns. */
   colors: string[];
   coloring: Coloring;
   outlines: boolean;
 }
 
-export const DEFAULT_SIDE = 1000;
-
 export function newDoc(): Doc {
-  const lattice: Lattice = { u: { x: DEFAULT_SIDE, y: 0 }, v: { x: 0, y: DEFAULT_SIDE } };
+  const impl = implOf(7);
+  const lattice = impl.defaultLattice;
   return {
-    parquet: '4.4.4.4',
-    mode: 'T',
-    form: 'square',
+    parquet: 7,
+    symmetry: 'T',
     lattice,
-    tile: baseTile(lattice),
+    tile: impl.baseTile(lattice),
     strokes: [],
-    colors: ['#f2a541', '#3a86c8', '#7bc950', '#e05263'],
+    colors: ['#f2a541', '#3a86c8', '#9b5de5', '#e05263'],
     coloring: 'checker',
     outlines: true,
   };
 }
 
+export const baseTileOf = (doc: Doc): Region => implOf(doc.parquet).baseTile(doc.lattice);
+
 /** True once the tile differs from the plain grid cell. */
 export function isEdited(doc: Doc): boolean {
-  return JSON.stringify(doc.tile) !== JSON.stringify(baseTile(doc.lattice)) || doc.strokes.length > 0;
+  return JSON.stringify(doc.tile) !== JSON.stringify(baseTileOf(doc)) || doc.strokes.length > 0;
 }
 
 /** Affine map carrying the old lattice cell onto the new one (both anchored at the origin). */
 export function latticeChange(from: Lattice, to: Lattice): Affine {
-  const det = from.u.x * from.v.y - from.u.y * from.v.x;
-  // Inverse of [u v] (columns).
-  const i00 = from.v.y / det;
-  const i01 = -from.v.x / det;
-  const i10 = -from.u.y / det;
-  const i11 = from.u.x / det;
-  // [u' v'] * inv([u v])
-  const a = to.u.x * i00 + to.v.x * i10;
-  const c = to.u.x * i01 + to.v.x * i11;
-  const b = to.u.y * i00 + to.v.y * i10;
-  const d = to.u.y * i01 + to.v.y * i11;
-  return [a, b, c, d, 0, 0];
+  const det = from.a.x * from.b.y - from.a.y * from.b.x;
+  // Inverse of [a b] (columns).
+  const i00 = from.b.y / det;
+  const i01 = -from.b.x / det;
+  const i10 = -from.a.y / det;
+  const i11 = from.a.x / det;
+  // [a' b'] * inv([a b])
+  return [
+    to.a.x * i00 + to.b.x * i10,
+    to.a.y * i00 + to.b.y * i10,
+    to.a.x * i01 + to.b.x * i11,
+    to.a.y * i01 + to.b.y * i11,
+    0,
+    0,
+  ];
 }
 
-const STORAGE_KEY = 'escher-doc-v1';
+const STORAGE_KEY = 'escher-doc-v2';
 
 export function loadDoc(): Doc | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const doc = JSON.parse(raw) as Doc;
-    if (!doc.lattice || !doc.tile || !Array.isArray(doc.colors)) return null;
+    if (!doc.lattice?.a || !doc.tile || !Array.isArray(doc.colors)) return null;
     return { ...newDoc(), ...doc };
   } catch {
     return null;

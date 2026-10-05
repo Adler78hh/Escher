@@ -1,45 +1,54 @@
 # Escher-Parkett
 
-Browser-App, mit der Schülerinnen und Schüler eine Fliese im Stil von M. C. Escher
-gestalten. Die Fliese füllt die Fläche immer lückenlos. Sie läuft am PC und auf dem
-Tablet (Touch und Stift).
+Tablet-App (PWA) für die Klassen 4–10: Kinder entwerfen eigene Escher-Puzzlestücke.
+Das Stück füllt die Ebene immer lückenlos, weil alles, was an einer Kante angebaut
+wird, an der zugehörigen Kante weggenommen wird.
 
 ## Ablauf
 
-1. **Parkett wählen:** Die 11 Parkette sind nummeriert wie im Unterricht (Parkett 1 = (3,3,3,3,3,3) bis Parkett 11 = (6,6,6)). Bisher gibt es Parkett 7, das Quadratgitter (4,4,4,4).
-2. **Raster und Symmetrie:**
-   - Symmetrie wählen:
-     - *Verschieben*
-     - *Drehen um die Kantenmitte (180°)*
-     - *Drehen um die Ecke (90°)*, nur beim Quadrat
-   - Rasterform wählen: Quadrat, Rechteck oder Parallelogramm. Die Form stellt man über die roten Punkte ein.
-3. **Fliese bearbeiten:**
-   - *Hinzufügen* oder *Anknabbern*, freihand oder mit Kreis, Dreieck oder Rechteck. Diese Formen rasten am Rand ein.
-   - Die Gegenkante ändert sich automatisch mit.
-4. **Gestalten:** Die Fliese einfärben und mit dem Stift Augen und Muster aufmalen.
-5. **Anzeigen:** Die Fläche füllen, wahlweise einfarbig, im Schachbrett oder mit einer Farbe je Drehung.
-6. **Ausgabe:**
-   - Kantenlänge in cm einstellen.
-   - Drucken oder als PDF speichern: Schablone zum Ausschneiden und/oder eine gefüllte A4-Seite.
-   - Beides gibt es auch als SVG.
+1. **Parkett wählen:**
+   - Die 11 archimedischen Parkette sind wie im Unterricht nummeriert, von Parkett 1 (3,3,3,3,3,3) bis Parkett 11 (6,6,6).
+   - Bisher gibt es Parkett 7 (4,4,4,4).
+2. **Symmetrie wählen:**
+   - *Verschieben*
+   - *Drehen um die Kantenmitte*
+   - *Drehen um die Ecke*, nur beim Quadrat
+   - Kanten, die zusammengehören, haben dieselbe Farbe.
+3. **Raster einstellen:**
+   - Die Punkte a und b lassen sich ziehen.
+   - Schnellwahl: Quadrat, Rechteck, Raute oder Parallelogramm.
+   - Optional mit Hilfsgitter.
+4. **Fliese bearbeiten:** Anbauen oder Anknabbern, freihand oder mit einrastenden Formen.
+5. **Gestalten, Anzeigen, Drucken:**
+   - Farbe und Malen.
+   - Die Fläche füllen, alle gleich oder abwechselnd.
+   - Schablone und Fläche in echter Größe drucken.
 
 Der Stand wird automatisch im Browser gespeichert. Rückgängig geht mit Strg+Z.
+Nach dem ersten Besuch funktioniert die App auch offline und lässt sich auf dem
+Tablet zum Home-Bildschirm hinzufügen.
 
 ## Entwicklung
 
 ```sh
 npm install
 npm run dev      # Entwicklungsserver
-npm test         # Geometrie-Tests (Parkettierung bleibt lückenlos)
+npm test         # Geometrie-Tests
 npm run build    # statische Seite in dist/
 ```
 
+Bei jedem Push auf `main` testet und baut GitHub Actions die App und veröffentlicht
+sie auf GitHub Pages. Dafür muss einmalig unter *Settings → Pages → Source*
+„GitHub Actions“ ausgewählt sein.
+
 ## Aufbau
 
-- `src/geom.ts`: Punkte, affine Abbildungen und Flächen-Boolesche Operationen (polygon-clipping, ganzzahlige Koordinaten).
-- `src/symmetry.ts`: Raster und Symmetriegruppen. Für jede Symmetrie gibt es die vier Abbildungen auf die Kantennachbarn, alle anderen Kopien entstehen durch Verketten.
-- `src/tile.ts`:
-  - *Hinzufügen*: Was in eine Nachbarfliese ragt, wird an der Urbild-Stelle abgezogen.
-  - *Anknabbern*: Das abgeknabberte Stück geht an den Nachbarn.
-  - So bleibt die Fliese immer parkettierbar.
-- `src/render.ts`, `src/print.ts`, `src/main.ts`: Darstellung, Druck und Oberfläche.
+- `src/core/`: Geometrie
+  - `geom.ts`: Punkte, Bewegungen, Boolesche Operationen mit polygon-clipping auf ganzzahligen Koordinaten.
+  - `tile.ts`: Anbauen und Anknabbern mit Prüfungen.
+- `src/parquets/`: Parkett-Typen und Symmetrien als Daten (`types.ts`)
+  - `square.ts`: Parkett 7.
+  - `archimedean.ts`: erzeugt die 11 Parkette aus ihrem Ecken-Typ, für die Vorschaubilder und später für weitere Parkette.
+- `src/model/`: Dokument, Verlauf (Rückgängig/Wiederholen), Raster-Regeln.
+- `src/render/`: SVG für Bildschirm und Druck.
+- `src/ui/`: React-Oberfläche.

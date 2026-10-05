@@ -2,10 +2,10 @@
 // Both are SVGs measured in millimetres; printing uses the browser's print
 // dialog (which can also save as PDF).
 
-import { bounds, len, regionToPath } from './geom';
-import { esc, parquetMarkup, tileDefs } from './render';
-import type { Doc } from './state';
-import { copiesForView } from './symmetry';
+import { bounds, len, regionToPath } from '../core/geom';
+import type { Doc } from '../model/doc';
+import { implOf, symmetryOf } from '../parquets';
+import { esc, parquetMarkup, tileDefs } from './markup';
 
 /** Printable area of an A4 page with 10 mm margins. */
 export const PAGE = { w: 190, h: 277 };
@@ -18,7 +18,7 @@ export interface PrintOptions {
 }
 
 /** Millimetres per world unit. */
-const mmPerUnit = (doc: Doc, o: PrintOptions): number => (o.sideCm * 10) / len(doc.lattice.u);
+const mmPerUnit = (doc: Doc, o: PrintOptions): number => (o.sideCm * 10) / len(doc.lattice.a);
 
 /** Size of the piece in millimetres (its bounding box). */
 export function pieceSizeMm(doc: Doc, o: PrintOptions): { w: number; h: number } {
@@ -52,7 +52,8 @@ export function templateSvg(doc: Doc, o: PrintOptions): string {
 export function areaSvg(doc: Doc, o: PrintOptions): string {
   const k = mmPerUnit(doc, o);
   const view = { minX: 0, minY: 0, maxX: PAGE.w / k, maxY: PAGE.h / k };
-  const copies = copiesForView(doc.lattice, doc.mode, view, 2);
+  const impl = implOf(doc.parquet);
+  const copies = impl.copiesForView(doc.lattice, symmetryOf(impl, doc.symmetry), view, 2);
   return (
     svgOpen(PAGE.w, PAGE.h) +
     `<defs><clipPath id="page"><rect width="${PAGE.w}" height="${PAGE.h}"/></clipPath></defs>` +

@@ -24,6 +24,8 @@ export type Affine = [number, number, number, number, number, number];
 
 export const IDENTITY: Affine = [1, 0, 0, 1, 0, 0];
 
+export const isIdentity = (m: Affine): boolean => m.every((v, i) => Math.abs(v - IDENTITY[i]) < 1e-9);
+
 export const add = (p: Pt, q: Pt): Pt => ({ x: p.x + q.x, y: p.y + q.y });
 export const sub = (p: Pt, q: Pt): Pt => ({ x: p.x - q.x, y: p.y - q.y });
 export const scale = (p: Pt, s: number): Pt => ({ x: p.x * s, y: p.y * s });
