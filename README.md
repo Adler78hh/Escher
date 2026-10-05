@@ -6,7 +6,7 @@ Tablet (Touch und Stift).
 
 ## Ablauf
 
-1. **Parkett wählen:** Bisher gibt es (4,4,4,4), das Quadratgitter.
+1. **Parkett wählen:** Die 11 Parkette sind nummeriert wie im Unterricht (Parkett 1 = (3,3,3,3,3,3) bis Parkett 11 = (6,6,6)). Bisher gibt es Parkett 7, das Quadratgitter (4,4,4,4).
 2. **Raster und Symmetrie:**
    - Symmetrie wählen:
      - *Verschieben*

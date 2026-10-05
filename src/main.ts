@@ -11,19 +11,19 @@ import { type EditTool, type Placement, type StampKind, applyEdit, baseTile, sna
 
 const STEPS = ['Parkett', 'Raster', 'Fliese', 'Gestalten', 'Anzeigen', 'Ausgabe'];
 
-/** The 11 parquets of regular polygons (vertex configurations). Only (4,4,4,4) is available so far. */
-const PARQUETS: { id: string; label: string; ready: boolean }[] = [
-  { id: '3.3.3.3.3.3', label: '(3,3,3,3,3,3)', ready: false },
-  { id: '4.4.4.4', label: '(4,4,4,4)', ready: true },
-  { id: '6.6.6', label: '(6,6,6)', ready: false },
-  { id: '3.3.3.3.6', label: '(3,3,3,3,6)', ready: false },
-  { id: '3.3.3.4.4', label: '(3,3,3,4,4)', ready: false },
-  { id: '3.3.4.3.4', label: '(3,3,4,3,4)', ready: false },
-  { id: '3.4.6.4', label: '(3,4,6,4)', ready: false },
-  { id: '3.6.3.6', label: '(3,6,3,6)', ready: false },
-  { id: '3.12.12', label: '(3,12,12)', ready: false },
-  { id: '4.6.12', label: '(4,6,12)', ready: false },
-  { id: '4.8.8', label: '(4,8,8)', ready: false },
+/** The 11 parquets of regular polygons (vertex configurations), numbered as in class. Only Parkett 7 is available so far. */
+const PARQUETS: { n: number; id: string; label: string; ready: boolean }[] = [
+  { n: 1, id: '3.3.3.3.3.3', label: '(3,3,3,3,3,3)', ready: false },
+  { n: 2, id: '3.3.3.3.6', label: '(3,3,3,3,6)', ready: false },
+  { n: 3, id: '3.3.3.4.4', label: '(3,3,3,4,4)', ready: false },
+  { n: 4, id: '3.3.4.3.4', label: '(3,3,4,3,4)', ready: false },
+  { n: 5, id: '3.4.6.4', label: '(3,4,6,4)', ready: false },
+  { n: 6, id: '3.6.3.6', label: '(3,6,3,6)', ready: false },
+  { n: 7, id: '4.4.4.4', label: '(4,4,4,4)', ready: true },
+  { n: 8, id: '4.8.8', label: '(4,8,8)', ready: false },
+  { n: 9, id: '3.12.12', label: '(3,12,12)', ready: false },
+  { n: 10, id: '4.6.12', label: '(4,6,12)', ready: false },
+  { n: 11, id: '6.6.6', label: '(6,6,6)', ready: false },
 ];
 
 const SYMMETRIES: { id: SymmetryMode; title: string; text: string }[] = [
@@ -263,10 +263,10 @@ function renderPanel() {
   switch (ui.step) {
     case 1:
       h = `<h2>1 · Parkett wählen</h2>
-        <p class="hint">Wähle die Grundform des Parketts. Für den Anfang gibt es das Quadratgitter (4,4,4,4).</p>
+        <p class="hint">Wähle die Grundform des Parketts. Für den Anfang gibt es Parkett 7, das Quadratgitter (4,4,4,4).</p>
         <div class="cards parquets">${PARQUETS.map(
           (p) => `<button class="card ${d.parquet === p.id ? 'active' : ''}" data-parquet="${p.id}" ${p.ready ? '' : 'disabled'}>
-            <span class="card-title">${p.label}</span><span class="card-text">${p.ready ? 'Quadrat-Gitter' : 'kommt später'}</span></button>`,
+            <span class="card-title">Parkett ${p.n}</span><span class="card-label">${p.label}</span><span class="card-text">${p.ready ? 'Quadrat-Gitter' : 'kommt später'}</span></button>`,
         ).join('')}</div>`;
       break;
     case 2:
